@@ -140,6 +140,6 @@ public class GameWindow extends JFrame {
 
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GameWindow());
+        SwingUtilities.invokeLater(GameWindow::new);
     }
 }
