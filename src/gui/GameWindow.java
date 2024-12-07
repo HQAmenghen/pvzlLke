@@ -24,18 +24,37 @@ public class GameWindow extends JFrame {
         mainContainer.setLayout(new BorderLayout());
         mainContainer.setOpaque(false); // 设置为透明
 
-        // 创建游戏区域
-        JPanel gameAreaPanel = new JPanel();
-        gameAreaPanel.setLayout(new GridLayout(5, 9));
-        gameAreaPanel.setPreferredSize(new Dimension(1200, 650)); // 设置首选大小
-        gameAreaPanel.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
+// 创建游戏区域
+JPanel gameAreaPanel = new JPanel();
+gameAreaPanel.setLayout(new GridLayout(5, 9));
+gameAreaPanel.setPreferredSize(new Dimension(1260, 650)); // 设置首选大小
+gameAreaPanel.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
 
-        for (int i = 0; i < 5 * 9; i++) {
-            JPanel cell = new JPanel();
-            cell.setBackground(Color.WHITE); // 设置背景颜色以便观察
-            cell.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
-            gameAreaPanel.add(cell);
+// 创建一个二维数组来存储单元格
+JPanel[][] cells = new JPanel[5][9];
+
+for (int i = 0; i < 5; i++) {
+    for (int j = 0; j < 9; j++) {
+        JPanel cell = new JPanel();
+        cell.setBackground(Color.WHITE); // 设置背景颜色以便观察
+        cell.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
+
+        // 根据索引的奇偶性选择不同的图片
+        ImageIcon icon;
+        if ((i + j) % 2 == 0) {
+            icon = new ImageIcon("src/resources/tile_0084.png"); // 第一种图片路径
+        } else {
+            icon = new ImageIcon("src/resources/tile_0092.png"); // 第二种图片路径
         }
+        JLabel label = new JLabel(icon);
+        cell.add(label);
+        gameAreaPanel.add(cell);
+
+        // 将单元格添加到二维数组中
+        cells[i][j] = cell;
+    }
+}
+
 
         // 创建顶部卡槽框
         // 将 topSlotPanel 提升为类的成员变量
@@ -50,21 +69,7 @@ public class GameWindow extends JFrame {
         if (sunIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
             // 调整图片大小
             Image scaledImage = sunIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH); // 将图片调整为100x100像素
-            ImageIcon scaledSunIcon = new ImageIcon(scaledImage);
-            JLabel sunLabel = new JLabel(scaledSunIcon);
-
-            // 创建一个垂直的 JPanel 来放置 sunLabel 和 sunCountLabel
-            JPanel verticalPanel = new JPanel();
-            verticalPanel.setLayout(new BoxLayout(verticalPanel, BoxLayout.Y_AXIS));
-            verticalPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // 确保垂直面板左对齐
-
-            // 添加阳光图标
-            verticalPanel.add(sunLabel);
-
-            // 添加阳光数量数字
-            JLabel sunCountLabel = new JLabel("100"); // 假设初始阳光数量为 100
-            sunCountLabel.setFont(new Font("Arial", Font.BOLD, 24));
-            verticalPanel.add(sunCountLabel);
+            JPanel verticalPanel = getjPanel(scaledImage);
 
             // 将垂直面板添加到 topSlotPanel
             topSlotPanel.add(verticalPanel);
@@ -92,6 +97,25 @@ public class GameWindow extends JFrame {
 
         // 设置窗口可见
         setVisible(true);
+    }
+
+    private static JPanel getjPanel(Image scaledImage) {
+        ImageIcon scaledSunIcon = new ImageIcon(scaledImage);
+        JLabel sunLabel = new JLabel(scaledSunIcon);
+
+        // 创建一个垂直的 JPanel 来放置 sunLabel 和 sunCountLabel
+        JPanel verticalPanel = new JPanel();
+        verticalPanel.setLayout(new BoxLayout(verticalPanel, BoxLayout.Y_AXIS));
+        verticalPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // 确保垂直面板左对齐
+
+        // 添加阳光图标
+        verticalPanel.add(sunLabel);
+
+        // 添加阳光数量数字
+        JLabel sunCountLabel = new JLabel("100"); // 假设初始阳光数量为 100
+        sunCountLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        verticalPanel.add(sunCountLabel);
+        return verticalPanel;
     }
 
     // 修改 addCard 方法中的调用
@@ -201,6 +225,14 @@ public class GameWindow extends JFrame {
         newCardContainer.add(newVerticalPanel, BorderLayout.CENTER);
         return newCardContainer;
     }
+
+    public void placeCard(String imagePath, JPanel  gameAreaPanel) {
+
+    }
+
+
+
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GameWindow::new);
