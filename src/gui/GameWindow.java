@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 public class GameWindow extends JFrame {
-    private final JPanel[][] cells = new JPanel[5][9]; // 用于存储每个格子
     private final JPanel[][] cards = new JPanel[5][9]; // 用于存储每个格子中的卡牌
     private static final int CELL_WIDTH = 140; // 格子宽度
     private static final int CELL_HEIGHT = 130; // 格子高度
@@ -18,7 +17,7 @@ public class GameWindow extends JFrame {
         // 标题
         setTitle("游戏");
         // 大小
-        setSize(1260, 800);
+        setSize(1260, 850);
         // 设置窗口关闭操作
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // 设置布局管理器为 BorderLayout
@@ -31,15 +30,18 @@ public class GameWindow extends JFrame {
 
         // 创建游戏区域
         gameAreaPanel = new JPanel();
-        gameAreaPanel.setLayout(new GridLayout(5, 9));
+        gameAreaPanel.setLayout(new BorderLayout()); // 使用 BorderLayout 布局
         gameAreaPanel.setPreferredSize(new Dimension(1260, 650)); // 设置首选大小
         gameAreaPanel.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
+
+        // 创建一个 JLayeredPane 来包含 cells 和 cards
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setPreferredSize(new Dimension(1260, 650)); // 设置与 gameAreaPanel 相同的首选大小
 
         // 创建一个二维数组来存储单元格
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 9; j++) {
                 JPanel cell = new JPanel();
-                cell.setBackground(Color.WHITE); // 设置背景颜色以便观察
                 cell.setBorder(new LineBorder(Color.BLACK, 1)); // 设置边框样式
 
                 // 根据索引的奇偶性选择不同的图片
@@ -51,17 +53,24 @@ public class GameWindow extends JFrame {
                 }
                 JLabel label = new JLabel(icon);
                 cell.add(label);
-                gameAreaPanel.add(cell);
 
-                // 将单元格添加到二维数组中
-                cells[i][j] = cell;
-
-                //初始化cards
+                // 初始化 cards
                 cards[i][j] = new JPanel();
                 cards[i][j].setLayout(new BorderLayout());
+                cards[i][j].setOpaque(false); // 设置为不透明以允许背景显示
 
+                // 将 cell 和 cards 添加到 JLayeredPane 中
+                layeredPane.add(cell, JLayeredPane.DEFAULT_LAYER);
+                layeredPane.add(cards[i][j], JLayeredPane.PALETTE_LAYER);
+
+                // 设置 cell 和 cards 的位置和大小
+                cell.setBounds(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+                cards[i][j].setBounds(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
             }
         }
+
+        // 将 JLayeredPane 添加到 gameAreaPanel 中
+        gameAreaPanel.add(layeredPane, BorderLayout.CENTER);
 
         // 创建顶部卡槽框
         // 将 topSlotPanel 提升为类的成员变量
@@ -93,14 +102,14 @@ public class GameWindow extends JFrame {
         // 将 topSlotPanel 添加到 mainContainer
         mainContainer.add(topSlotPanel, BorderLayout.NORTH);
 
-        // 将 mainContainer 添加到 GameWindow
-        add(mainContainer, BorderLayout.CENTER);
-
         // 将 gameAreaPanel 添加到 mainContainer
         mainContainer.add(gameAreaPanel, BorderLayout.CENTER);
 
         mainContainer.setComponentZOrder(gameAreaPanel, 1);
         mainContainer.setComponentZOrder(topSlotPanel, 0);
+
+        // 将 mainContainer 添加到 GameWindow
+        add(mainContainer, BorderLayout.CENTER);
 
         // 设置窗口可见
         setVisible(true);
@@ -129,7 +138,7 @@ public class GameWindow extends JFrame {
     private void addCard(JPanel panel, String imagePath, String costText, JPanel mainContainer) {
         // 加载图像
         ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
-        Image scaledImage = cardIcon.getImage().getScaledInstance(100, 130, Image.SCALE_SMOOTH); // 将图片调整为100x120像素
+        Image scaledImage = cardIcon.getImage().getScaledInstance(100, 120, Image.SCALE_SMOOTH); // 将图片调整为100x120像素
         ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
 
         // 创建 JLabel 并添加到面板
@@ -234,62 +243,53 @@ public class GameWindow extends JFrame {
         return newCardContainer;
     }
 
-private void placeCard(String imagePath, JPanel mainContainer, int x, int y) {
-   // 获取 gameAreaPanel 在 mainContainer 中的位置
-Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
-Point mainContainerLocation = mainContainer.getLocationOnScreen();
+    private void placeCard(String imagePath, JPanel mainContainer, int x, int y) {
+        // 获取 gameAreaPanel 在 mainContainer 中的位置
+        Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
+        Point mainContainerLocation = mainContainer.getLocationOnScreen();
 
-// 将鼠标释放位置转换为 gameAreaPanel 的坐标系
-int gameAreaX = x - (gameAreaLocation.x - mainContainerLocation.x);
-int gameAreaY = y - (gameAreaLocation.y - mainContainerLocation.y);
+        // 将鼠标释放位置转换为 gameAreaPanel 的坐标系
+        int gameAreaX = x - (gameAreaLocation.x - mainContainerLocation.x);
+        int gameAreaY = y - (gameAreaLocation.y - mainContainerLocation.y);
 
-// 计算释放位置对应的格子坐标
-int col = gameAreaX / CELL_WIDTH;
-int row = (gameAreaY+120) / CELL_HEIGHT;
-//
-//// 打印调试信息
-//System.out.println("鼠标释放位置在屏幕上的坐标: (" + x + ", " + y + ")");
-//System.out.println("gameAreaPanel 在屏幕上的位置: " + gameAreaLocation);
-//System.out.println("mainContainer 在屏幕上的位置: " + mainContainerLocation);
-//System.out.println("计算出的 gameAreaPanel 相对位置: (" + gameAreaX + ", " + gameAreaY + ")");
-//System.out.println("计算出的格子位置: (" + col + ", " + row + ")");
+        // 计算释放位置对应的格子坐标
+        int col = (gameAreaX+50) / CELL_WIDTH;
+        int row = (gameAreaY + 120) / CELL_HEIGHT;
 
+        // 检查是否在有效范围内
+        if (row >= 0 && row < 5 && col >= 0 && col < 9) {
+            // 获取目标格子
+            JPanel targetCell = cards[row][col];
 
-    // 检查是否在有效范围内
-    if (row >= 0 && row < 5 && col >= 0 && col < 9) {
-        // 获取目标格子
-        JPanel targetCell = cards[row][col];
+            // 检查目标格子是否已经有卡片
+            if (targetCell.getComponentCount() > 0) {
+                return;
+            }
 
-        // 检查目标格子是否已经有卡片
-        if (targetCell.getComponentCount() > 0) {
-            targetCell.removeAll();
+            // 创建卡片容器
+            JPanel cardContainer = new JPanel();
+            cardContainer.setLayout(new BorderLayout());
+            cardContainer.setOpaque(false);
+
+            // 加载并设置卡片图片
+            ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
+            Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
+            ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
+
+            JLabel cardLabel = new JLabel(scaledCardIcon);
+            cardContainer.add(cardLabel, BorderLayout.CENTER);
+
+            // 将卡片添加到目标格子
+            targetCell.add(cardContainer);
+
+            // 更新二维数组中的卡牌引用
+            cards[row][col] = cardContainer;
+
+            // 重新验证和绘制目标格子，以反映新的布局变化
+            targetCell.validate();
+            targetCell.repaint();
         }
-
-        // 创建卡片容器
-        JPanel cardContainer = new JPanel();
-        cardContainer.setLayout(new BorderLayout());
-
-
-        // 加载并设置卡片图片
-        ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
-        Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
-        ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
-
-        JLabel cardLabel = new JLabel(scaledCardIcon);
-        cardContainer.add(cardLabel, BorderLayout.CENTER);
-
-        // 将卡片添加到目标格子
-        targetCell.add(cardContainer);
-
-        // 更新二维数组中的卡牌引用
-        cards[row][col] = cardContainer;
-
-        // 重新验证和绘制目标格子，以反映新的布局变化
-        targetCell.validate();
-        targetCell.repaint();
     }
-}
-
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GameWindow::new);
