@@ -1,5 +1,8 @@
 package gui;
 
+import game.GameManager;
+import model.Plant;
+import model.Sunflower;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -7,13 +10,17 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
+
 public class GameWindow extends JFrame {
     private final JPanel[][] cards = new JPanel[5][9]; // 用于存储每个格子中的卡牌
     private static final int CELL_WIDTH = 140; // 格子宽度
     private static final int CELL_HEIGHT = 130; // 格子高度
     private final JPanel gameAreaPanel; // 提升为类的成员变量
+    private final game.GameManager GameManager;
 
-    public GameWindow() {
+
+    public GameWindow(GameManager gameManager) {
+        this.GameManager = gameManager;
         // 标题
         setTitle("游戏");
         // 大小
@@ -73,7 +80,6 @@ public class GameWindow extends JFrame {
         gameAreaPanel.add(layeredPane, BorderLayout.CENTER);
 
         // 创建顶部卡槽框
-        // 将 topSlotPanel 提升为类的成员变量
         JPanel topSlotPanel = new JPanel(); // 初始化 topSlotPanel
         topSlotPanel.setBackground(Color.GRAY); // 设置背景颜色以便观察
         topSlotPanel.setPreferredSize(new Dimension(1200, 150)); // 设置首选大小
@@ -84,8 +90,24 @@ public class GameWindow extends JFrame {
         ImageIcon sunIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/resources/sun.png")));
         if (sunIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
             // 调整图片大小
-            Image scaledImage = sunIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH); // 将图片调整为100x100像素
-            JPanel verticalPanel = getjPanel(scaledImage);
+            Image scaledImage = sunIcon.getImage().getScaledInstance(100, 120, Image.SCALE_SMOOTH); // 将图片调整为100x100像素
+
+            // 创建一个垂直的 JPanel 来放置 sunLabel 和 sunCountLabel
+            JPanel verticalPanel = new JPanel();
+            verticalPanel.setLayout(new BoxLayout(verticalPanel, BoxLayout.Y_AXIS));
+            verticalPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // 确保垂直面板左对齐
+
+            // 创建阳光图标标签
+            ImageIcon scaledSunIcon = new ImageIcon(scaledImage);
+            JLabel sunLabel = new JLabel(scaledSunIcon);
+            verticalPanel.add(sunLabel);
+
+            // 创建阳光数量数字标签
+            JLabel sunCountLabel = new JLabel(String.valueOf(gameManager.getSunPoints())); // 使用GameManager中的阳光数量
+            verticalPanel.add(sunCountLabel);
+
+            // 将sunCountLabel设置为GameManager的回调目标
+            gameManager.setSunCountLabel(sunCountLabel);
 
             // 将垂直面板添加到 topSlotPanel
             topSlotPanel.add(verticalPanel);
@@ -94,10 +116,17 @@ public class GameWindow extends JFrame {
             topSlotPanel.add(sunLabel);
         }
 
-        // 添加卡片到顶部卡槽框
-        addCard(topSlotPanel, "/resources/place_sunflower.png", "50", mainContainer);
-        addCard(topSlotPanel, "/resources/peashooter.jpg", "100", mainContainer);
-        addCard(topSlotPanel, "/resources/walnut.jpg", "75", mainContainer);
+        // 创建一个 Sunflower 实例
+        Plant sunflower = new Sunflower();
+        addCard(topSlotPanel, sunflower, "50", mainContainer);
+
+        // 创建一个 Peashooter 实例
+        Plant peashooter = new model.Peashooter();
+        addCard(topSlotPanel, peashooter, "100", mainContainer);
+
+        // 创建一个 WallNut 实例
+        Plant wallnut = new model.WallNut();
+        addCard(topSlotPanel, wallnut, "50", mainContainer);
 
         // 将 topSlotPanel 添加到 mainContainer
         mainContainer.add(topSlotPanel, BorderLayout.NORTH);
@@ -111,33 +140,23 @@ public class GameWindow extends JFrame {
         // 将 mainContainer 添加到 GameWindow
         add(mainContainer, BorderLayout.CENTER);
 
+        updateGameState();
+
         // 设置窗口可见
         setVisible(true);
     }
 
-    private static JPanel getjPanel(Image scaledImage) {
-        ImageIcon scaledSunIcon = new ImageIcon(scaledImage);
-        JLabel sunLabel = new JLabel(scaledSunIcon);
+    private void addCard(JPanel slotPanel, Plant plant, String cost, JPanel mainContainer) {
+        // 创建卡片容器
+        JPanel card = new JPanel();
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
 
-        // 创建一个垂直的 JPanel 来放置 sunLabel 和 sunCountLabel
-        JPanel verticalPanel = new JPanel();
-        verticalPanel.setLayout(new BoxLayout(verticalPanel, BoxLayout.Y_AXIS));
-        verticalPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // 确保垂直面板左对齐
+        // 设置边框
+        card.setBorder(new LineBorder(Color.BLACK, 2)); // 黑色边框，宽度为2像素
 
-        // 添加阳光图标
-        verticalPanel.add(sunLabel);
-
-        // 添加阳光数量数字
-        JLabel sunCountLabel = new JLabel("100"); // 假设初始阳光数量为 100
-        sunCountLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        verticalPanel.add(sunCountLabel);
-        return verticalPanel;
-    }
-
-    // 修改 addCard 方法中的调用
-    private void addCard(JPanel panel, String imagePath, String costText, JPanel mainContainer) {
         // 加载图像
-        ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
+        ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(plant.getImagePath())));
         Image scaledImage = cardIcon.getImage().getScaledInstance(100, 120, Image.SCALE_SMOOTH); // 将图片调整为100x120像素
         ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
 
@@ -145,105 +164,90 @@ public class GameWindow extends JFrame {
         JLabel cardLabel = new JLabel(scaledCardIcon);
 
         // 创建费用 JLabel 并添加到面板
-        JLabel costLabel = new JLabel(costText);
+        JLabel costLabel = new JLabel(cost);
         costLabel.setHorizontalAlignment(SwingConstants.CENTER); // 设置文字居中对齐
 
         // 创建一个垂直的 JPanel 来放置 cardLabel 和 costLabel
-        JPanel verticalPanel = createVerticalPanel(cardLabel, costLabel);
-
-        // 使卡片可拖动
-        makeDraggable(panel, verticalPanel, imagePath, mainContainer);
-    }
-
-    private JPanel createVerticalPanel(JLabel cardLabel, JLabel costLabel) {
         JPanel verticalPanel = new JPanel();
         verticalPanel.setLayout(new BoxLayout(verticalPanel, BoxLayout.Y_AXIS));
         verticalPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         verticalPanel.add(cardLabel);
         verticalPanel.add(costLabel);
-        return verticalPanel;
+
+        // 将 verticalPanel 添加到 card 容器
+        card.add(verticalPanel, BorderLayout.CENTER);
+
+        // 使卡片可拖动
+        makeDraggable(slotPanel, card, plant, mainContainer);
+
+        // 将卡片添加到顶部卡槽框
+        slotPanel.add(card);
+
     }
 
-    private void makeDraggable(JPanel panel, JPanel verticalPanel, String imagePath, JPanel mainContainer) {
-        // 定义鼠标按下时的位置变量
-        final int[] x = {0};
-        final int[] y = {0};
-        final Point originalLocation = new Point();
-        ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
-        Image scaledImage = cardIcon.getImage().getScaledInstance(100, 120, Image.SCALE_SMOOTH); // 将图片调整为100x120像素
-        ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
 
-        // 创建一个新的 JPanel 来作为卡片的外部容器
-        JPanel cardContainer = new JPanel();
-        cardContainer.setLayout(new BorderLayout());
-        cardContainer.add(verticalPanel, BorderLayout.CENTER);
+private void makeDraggable(JPanel topSlotPanel, JPanel card, Plant plant, JPanel mainContainer) {
+    // 定义鼠标按下时的位置变量
+    final int[] x = {0};
+    final int[] y = {0};
+    final Point originalLocation = new Point();
 
-        // 添加鼠标监听器
-        cardContainer.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                x[0] = e.getX();
-                y[0] = e.getY();
-                // 保存卡片的原始位置
-                originalLocation.setLocation(cardContainer.getLocation());
-            }
+    // 添加鼠标监听器
+    card.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            x[0] = e.getX();
+            y[0] = e.getY();
+            originalLocation.setLocation(card.getX(), card.getY());
+        }
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // 创建新的卡片容器，参数包括缩放后的卡片图标和垂直面板中的某个组件的文本
-                JPanel newCardContainer = createCardContainer(scaledCardIcon, ((JLabel) verticalPanel.getComponent(1)).getText());
+        @Override
+        public void mouseReleased(MouseEvent e) {
 
-                // 获取当前卡片容器在屏幕上的位置
-                Point cardLocation = cardContainer.getLocationOnScreen();
 
-                // 获取主容器在屏幕上的位置
-                Point panelLocation = mainContainer.getLocationOnScreen();
+            // 获取当前卡片在屏幕上的位置
+            Point cardLocation = card.getLocationOnScreen();
 
-                // 计算新卡片在主容器中的位置
-                int newX = cardLocation.x - panelLocation.x + e.getX() - x[0];
-                int newY = cardLocation.y - panelLocation.y + e.getY() - y[0];
+            // 获取主容器在屏幕上的位置
+            Point panelLocation = mainContainer.getLocationOnScreen();
 
-                // 将卡片移动回原始位置
-                cardContainer.setLocation(originalLocation);
+            int newX = cardLocation.x - panelLocation.x + e.getX() - x[0];
+            int newY = cardLocation.y - panelLocation.y + e.getY() - y[0];
 
-                // 将新卡片添加到主容器中
-                mainContainer.add(newCardContainer);
+            topSlotPanel.add(card);
+            // 调用 placeCard 方法并传递 Plant 对象
+            placeCard(plant, mainContainer, newX, newY);
 
-                // 调用 placeCard 方法
-                placeCard(imagePath, mainContainer, newX, newY);
 
-                // 重新验证和绘制主容器，以反映新的布局变化
+            // 重置卡片的位置为顶部卡槽的位置
+            card.setLocation(originalLocation);
 
-                mainContainer.repaint();
-            }
-        });
+            // 重新验证和绘制主容器，以反映新的布局变化
+            mainContainer.repaint();
 
-        // 添加鼠标移动监听器
-        cardContainer.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                int a = cardContainer.getLocation().x;
-                int b = cardContainer.getLocation().y;
-                cardContainer.setLocation(a + e.getX() - x[0], b + e.getY() - y[0]);
-                mainContainer.setComponentZOrder(cardContainer, 0); // 确保卡片在最前面
-            }
-        });
 
-        // 将外部容器添加到主面板
-        panel.add(cardContainer);
-    }
 
-    private JPanel createCardContainer(ImageIcon scaledCardIcon, String costText) {
-        JPanel newCardContainer = new JPanel();
-        newCardContainer.setLayout(new BorderLayout());
-        newCardContainer.setOpaque(false);
+        }
+    });
 
-        JPanel newVerticalPanel = createVerticalPanel(new JLabel(scaledCardIcon), new JLabel(costText));
-        newCardContainer.add(newVerticalPanel, BorderLayout.CENTER);
-        return newCardContainer;
-    }
 
-    private void placeCard(String imagePath, JPanel mainContainer, int x, int y) {
+    // 添加鼠标移动监听器
+    card.addMouseMotionListener(new MouseAdapter() {
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            int a = card.getX();
+            int b = card.getY();
+            card.setLocation(a + e.getX() - x[0], b + e.getY() - y[0]);
+            mainContainer.setComponentZOrder(card, 0); // 确保副本卡片在最前面
+            mainContainer.repaint();
+
+        }
+    });
+}
+
+
+
+    private void placeCard(Plant plant, JPanel mainContainer, int x, int y) {
         // 获取 gameAreaPanel 在 mainContainer 中的位置
         Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
         Point mainContainerLocation = mainContainer.getLocationOnScreen();
@@ -253,7 +257,7 @@ public class GameWindow extends JFrame {
         int gameAreaY = y - (gameAreaLocation.y - mainContainerLocation.y);
 
         // 计算释放位置对应的格子坐标
-        int col = (gameAreaX+50) / CELL_WIDTH;
+        int col = (gameAreaX + 50) / CELL_WIDTH;
         int row = (gameAreaY + 120) / CELL_HEIGHT;
 
         // 检查是否在有效范围内
@@ -266,24 +270,43 @@ public class GameWindow extends JFrame {
                 return;
             }
 
-            // 创建卡片容器
-            JPanel cardContainer = new JPanel();
-            cardContainer.setLayout(new BorderLayout());
-            cardContainer.setOpaque(false);
+            // 获取植物的成本
+            int cost = plant.getCost();
+
+            // 检查阳光数量是否足够
+            if (GameManager.getSunPoints() < cost) {
+                // 阳光数量不足，可以选择性地向用户显示一条消息
+                JOptionPane.showMessageDialog(this, "阳光不足，无法种植 " + plant.getClass().getSimpleName(), "阳光不足", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 打印传入的植物类的简单名称
+            System.out.println("放置的是" + plant.getClass().getSimpleName());
+
+            // 扣除阳光数量
+            GameManager.deductSunPoints(cost);
 
             // 加载并设置卡片图片
+            String imagePath = plant.getImagePath(); // 提取图片路径
             ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
             Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
             ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
 
-            JLabel cardLabel = new JLabel(scaledCardIcon);
-            cardContainer.add(cardLabel, BorderLayout.CENTER);
+            // 创建一个新的 JLabel 来显示图标
+            JLabel label = new JLabel(scaledCardIcon);
+            label.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
 
-            // 将卡片添加到目标格子
-            targetCell.add(cardContainer);
+            // 将 JLabel 添加到目标格子
+            targetCell.add(label, BorderLayout.CENTER);
+
+            // 记录卡片对应的植物类
+            targetCell.putClientProperty("plant", plant);
 
             // 更新二维数组中的卡牌引用
-            cards[row][col] = cardContainer;
+            cards[row][col] = targetCell;
+
+            // 调度阳光生产
+            GameManager.addPlant(plant); // 添加植物到GameManager
 
             // 重新验证和绘制目标格子，以反映新的布局变化
             targetCell.validate();
@@ -291,7 +314,32 @@ public class GameWindow extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(GameWindow::new);
+    private void updateGameState() {
+    // 更新植物的状态
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 9; j++) {
+            JPanel cell = cards[i][j];
+            Plant plant = (Plant) cell.getClientProperty("plant");
+            if (plant != null) {
+                GameManager.scheduleUpdate();
+            }
+        }
     }
+
 }
+
+
+
+
+public static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+        GameManager gameManager = new GameManager(); // 创建GameManager实例
+        new GameWindow(gameManager); // 将GameManager实例传递给GameWindow构造函数
+        gameManager.startGame();
+
+    });
+}
+
+
+}
+
