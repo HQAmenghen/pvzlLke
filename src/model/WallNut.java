@@ -1,7 +1,5 @@
 package model;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 
 
 public class WallNut extends Plant {
@@ -9,7 +7,7 @@ public class WallNut extends Plant {
 
 
     public static class Constants {
-        public static final int WALLNUT_COST = 50; // 种植坚果墙所需的阳光数量
+        public static final int WALLNUT_COST = 75; // 种植坚果墙所需的阳光数量
         public static final int WALLNUT_HEALTH = 200; // 坚果墙的生命值
     }
 

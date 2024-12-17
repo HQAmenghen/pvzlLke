@@ -126,7 +126,7 @@ public class GameWindow extends JFrame {
 
         // 创建一个 WallNut 实例
         Plant wallnut = new model.WallNut();
-        addCard(topSlotPanel, wallnut, "50", mainContainer);
+        addCard(topSlotPanel, wallnut, "75", mainContainer);
 
         // 将 topSlotPanel 添加到 mainContainer
         mainContainer.add(topSlotPanel, BorderLayout.NORTH);
@@ -327,8 +327,6 @@ private void makeDraggable(JPanel topSlotPanel, JPanel card, Plant plant, JPanel
     }
 
 }
-
-
 
 
 public static void main(String[] args) {
