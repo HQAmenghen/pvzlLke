@@ -3,6 +3,8 @@ package gui;
 import game.GameManager;
 import model.Plant;
 import model.Sunflower;
+import model.Zombie;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -12,7 +14,7 @@ import java.util.Objects;
 
 
 public class GameWindow extends JFrame {
-    private final JPanel[][] cards = new JPanel[5][9]; // 用于存储每个格子中的卡牌
+    public static JPanel[][] cards = new JPanel[5][9]; // 用于存储每个格子中的卡牌
     private static final int CELL_WIDTH = 140; // 格子宽度
     private static final int CELL_HEIGHT = 130; // 格子高度
     private final JPanel gameAreaPanel; // 提升为类的成员变量
@@ -142,6 +144,9 @@ public class GameWindow extends JFrame {
 
         updateGameState();
 
+        Zombie.zombie_generate(this);
+
+
         // 设置窗口可见
         setVisible(true);
     }
@@ -186,65 +191,63 @@ public class GameWindow extends JFrame {
     }
 
 
-private void makeDraggable(JPanel topSlotPanel, JPanel card, Plant plant, JPanel mainContainer) {
-    // 定义鼠标按下时的位置变量
-    final int[] x = {0};
-    final int[] y = {0};
-    final Point originalLocation = new Point();
+    private void makeDraggable(JPanel topSlotPanel, JPanel card, Plant plant, JPanel mainContainer) {
+        // 定义鼠标按下时的位置变量
+        final int[] x = {0};
+        final int[] y = {0};
+        final Point originalLocation = new Point();
 
-    // 添加鼠标监听器
-    card.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-            x[0] = e.getX();
-            y[0] = e.getY();
-            originalLocation.setLocation(card.getX(), card.getY());
-        }
+        // 添加鼠标监听器
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                x[0] = e.getX();
+                y[0] = e.getY();
+                originalLocation.setLocation(card.getX(), card.getY());
+            }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-
-
-            // 获取当前卡片在屏幕上的位置
-            Point cardLocation = card.getLocationOnScreen();
-
-            // 获取主容器在屏幕上的位置
-            Point panelLocation = mainContainer.getLocationOnScreen();
-
-            int newX = cardLocation.x - panelLocation.x + e.getX() - x[0];
-            int newY = cardLocation.y - panelLocation.y + e.getY() - y[0];
-
-            topSlotPanel.add(card);
-            // 调用 placeCard 方法并传递 Plant 对象
-            placeCard(plant, mainContainer, newX, newY);
+            @Override
+            public void mouseReleased(MouseEvent e) {
 
 
-            // 重置卡片的位置为顶部卡槽的位置
-            card.setLocation(originalLocation);
+                // 获取当前卡片在屏幕上的位置
+                Point cardLocation = card.getLocationOnScreen();
 
-            // 重新验证和绘制主容器，以反映新的布局变化
-            mainContainer.repaint();
+                // 获取主容器在屏幕上的位置
+                Point panelLocation = mainContainer.getLocationOnScreen();
+
+                int newX = cardLocation.x - panelLocation.x + e.getX() - x[0];
+                int newY = cardLocation.y - panelLocation.y + e.getY() - y[0];
+
+                topSlotPanel.add(card);
+                // 调用 placeCard 方法并传递 Plant 对象
+                placeCard(plant, mainContainer, newX, newY);
 
 
+                // 重置卡片的位置为顶部卡槽的位置
+                card.setLocation(originalLocation);
 
-        }
-    });
+                // 重新验证和绘制主容器，以反映新的布局变化
+                mainContainer.repaint();
 
 
-    // 添加鼠标移动监听器
-    card.addMouseMotionListener(new MouseAdapter() {
-        @Override
-        public void mouseDragged(MouseEvent e) {
-            int a = card.getX();
-            int b = card.getY();
-            card.setLocation(a + e.getX() - x[0], b + e.getY() - y[0]);
-            mainContainer.setComponentZOrder(card, 0); // 确保副本卡片在最前面
-            mainContainer.repaint();
+            }
+        });
 
-        }
-    });
-}
 
+        // 添加鼠标移动监听器
+        card.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int a = card.getX();
+                int b = card.getY();
+                card.setLocation(a + e.getX() - x[0], b + e.getY() - y[0]);
+                mainContainer.setComponentZOrder(card, 0); // 确保副本卡片在最前面
+                mainContainer.repaint();
+
+            }
+        });
+    }
 
 
     private void placeCard(Plant plant, JPanel mainContainer, int x, int y) {
@@ -292,51 +295,95 @@ private void makeDraggable(JPanel topSlotPanel, JPanel card, Plant plant, JPanel
             Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
             ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
 
-            // 创建一个新的 JLabel 来显示图标
+// 创建一个新的 JLabel 来显示图标
             JLabel label = new JLabel(scaledCardIcon);
             label.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
+            label.setOpaque(false); // 设置 JLabel 透明
 
-            // 将 JLabel 添加到目标格子
-            targetCell.add(label, BorderLayout.CENTER);
+// 创建一个新的 JLabel 来显示血量
+            JLabel healthLabel = new JLabel(String.valueOf(plant.getHealth())); // 假设 getHealth() 返回血量值
+            healthLabel.setForeground(Color.GREEN); // 设置血量标签颜色为绿色
+            healthLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // 设置字体
+            healthLabel.setOpaque(false); // 设置血量标签透明
 
-            // 记录卡片对应的植物类
-            targetCell.putClientProperty("plant", plant);
+// 创建一个 JPanel 并设置布局管理器为 BorderLayout
+            JPanel plantPanel = new JPanel(new BorderLayout());
+            plantPanel.setOpaque(false); // 设置 JPanel 透明
+            plantPanel.add(label, BorderLayout.CENTER); // 添加植物图片标签到中心
+            plantPanel.add(healthLabel, BorderLayout.NORTH); // 添加血量标签到顶部
+
+// 给每个 plantPanel 唯一命名
+            plantPanel.setName("Plant_" + row + "_" + col);
+
+// 清除目标格子中的所有组件
+            targetCell.removeAll();
+
+// 将 JPanel 添加到目标格子
+            targetCell.add(plantPanel);
+            targetCell.revalidate(); // 刷新界面
+            targetCell.repaint(); // 重绘界面
+
 
             // 更新二维数组中的卡牌引用
             cards[row][col] = targetCell;
 
-            // 调度阳光生产
+            // 设置植物的坐标
+            plant.setY(col);
+            plant.setX(row);
+
             GameManager.addPlant(plant); // 添加植物到GameManager
 
-            // 重新验证和绘制目标格子，以反映新的布局变化
-            targetCell.validate();
-            targetCell.repaint();
+
         }
     }
 
     private void updateGameState() {
-    // 更新植物的状态
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 9; j++) {
-            JPanel cell = cards[i][j];
-            Plant plant = (Plant) cell.getClientProperty("plant");
-            if (plant != null) {
-                GameManager.scheduleUpdate();
+        // 更新植物的状态
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 9; j++) {
+                JPanel cell = cards[i][j];
+                Plant plant = (Plant) cell.getClientProperty("plant");
+                if (plant != null) {
+                    GameManager.scheduleUpdate();
+                }
             }
         }
+
     }
 
+    //public void printAllComponents() {
+//    for (int i = 0; i < GameWindow.cards.length; i++) {
+//        for (int j = 0; j < GameWindow.cards[i].length; j++) {
+//            Component[] components = GameWindow.cards[i][j].getComponents();
+//            System.out.println("坐标 (" + i + ", " + j + ") 的组件列表:");
+//            if (components == null || components.length == 0) {
+//                System.out.println("  无组件");
+//            } else {
+//                for (Component component : components) {
+//                    System.out.println("  类型: " + component.getClass().getName() + ", 名称: " + component.getName());
+//                }
+//            }
+//        }
+//    }
+//}
+public  void updatePlantHealth(JLabel healthLabel, Plant plant) {
+    // 更新植物的生命值标签
+    healthLabel.setText(String.valueOf(plant.getHealth()));
+    System.out.println("更新后的血量: " + plant.getHealth());
+    healthLabel.revalidate();
+    healthLabel.repaint();
 }
 
 
-public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> {
-        GameManager gameManager = new GameManager(); // 创建GameManager实例
-        new GameWindow(gameManager); // 将GameManager实例传递给GameWindow构造函数
-        gameManager.startGame();
 
-    });
-}
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            GameManager gameManager = new GameManager(); // 创建GameManager实例
+            new GameWindow(gameManager); // 将GameManager实例传递给GameWindow构造函数
+            gameManager.startGame();
+        });
+    }
 
 
 }

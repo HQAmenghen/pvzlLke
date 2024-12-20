@@ -6,13 +6,12 @@
    import java.util.TimerTask;
 
    public class Sunflower extends Plant {
-       private GameManager gameManager; // 创建 GameManager 实例
+       private final GameManager gameManager; // 创建 GameManager 实例
        private final Timer timer;
 
        private static class Constants {
            public static final int SUNFLOWER_COST = 50; // 种植太阳花所需的阳光数量
            public static final int SUNFLOWER_HEALTH = 60; // 太阳花的生命值
-           public static final int SUNFLOWER_SUN_GENERATION_RATE = 5000; // 太阳花生成阳光的频率（毫秒）
            public static final int SUNFLOWER_SUN_AMOUNT = 25; // 太阳花每次生成的阳光数量
        }
 

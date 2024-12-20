@@ -5,7 +5,6 @@ import model.Plant;
 import model.Sunflower;
 import model.Zombie;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -17,7 +16,7 @@ public class GameManager {
     private static int sunPoints;
     private Timer timer;
     private JLabel sunCountLabel; // 引用sunCountLabel
-    private List<Plant> plants; // 使用List来存储所有的植物实例
+    private static List<Plant> plants; // 使用List来存储所有的植物实例
     private List<Zombie> zombies; // 声明并初始化zombies列表
 
     public GameManager() {
@@ -34,7 +33,6 @@ public class GameManager {
     public void startGame() {
         scheduleSunIncrease(); // 开始定时增加阳光
         scheduleUpdate(); // 开始定时更新
-
     }
 
     public void endGame() {
@@ -115,7 +113,11 @@ public class GameManager {
         System.out.println("添加植物: " + plant.getClass().getSimpleName());
     }
 
-    public void removePlant(Plant plant) {
+    public static void removePlant(Plant plant) {
         plants.remove(plant);
+    }
+
+    public static List<Plant> getPlants() {
+        return plants;
     }
 }
