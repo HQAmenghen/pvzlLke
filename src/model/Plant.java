@@ -1,7 +1,6 @@
 package model;
 
 import gui.GameWindow;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -14,7 +13,7 @@ public abstract class Plant extends JLabel {
     protected JLabel healthLabel; // 植物的生命值标签
 
     public Plant(int health, int cost, String imagePath) {
-        super(); // 调用父类构造函数
+        super();
         this.health = health;
         this.cost = cost;
         this.imagePath = imagePath;
@@ -39,9 +38,9 @@ public abstract class Plant extends JLabel {
         if (health <= 0) {
             // 植物死亡的处理逻辑
             System.out.println(getName() + " 死亡");
-            GameWindow.cards[getX()][getY()].removeAll();
-            GameWindow.cards[getX()][getY()].revalidate();
-            GameWindow.cards[getX()][getY()].repaint();
+            GameWindow.cards[x][y].removeAll();
+            GameWindow.cards[x][y].revalidate();
+            GameWindow.cards[x][y].repaint();
         }
     }
 
@@ -79,8 +78,4 @@ public abstract class Plant extends JLabel {
         this.y = y;
     }
 
-    public JLabel getHealthLabel() {
-        return healthLabel;
-    }
 }
-

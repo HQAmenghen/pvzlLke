@@ -117,7 +117,7 @@ public class GameManager {
         plants.remove(plant);
     }
 
-    public static List<Plant> getPlants() {
+    public  List<Plant> getPlants() {
         return plants;
     }
 }

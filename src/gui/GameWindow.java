@@ -18,6 +18,7 @@ public class GameWindow extends JFrame {
     private static final int CELL_WIDTH = 140; // 格子宽度
     private static final int CELL_HEIGHT = 130; // 格子高度
     private final JPanel gameAreaPanel; // 提升为类的成员变量
+    private  JLabel healthLabel;
     private final game.GameManager GameManager;
 
 
@@ -250,7 +251,7 @@ public class GameWindow extends JFrame {
     }
 
 
-    private void placeCard(Plant plant, JPanel mainContainer, int x, int y) {
+    public void placeCard(Plant plant, JPanel mainContainer, int x, int y) {
         // 获取 gameAreaPanel 在 mainContainer 中的位置
         Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
         Point mainContainerLocation = mainContainer.getLocationOnScreen();
@@ -301,7 +302,7 @@ public class GameWindow extends JFrame {
             label.setOpaque(false); // 设置 JLabel 透明
 
 // 创建一个新的 JLabel 来显示血量
-            JLabel healthLabel = new JLabel(String.valueOf(plant.getHealth())); // 假设 getHealth() 返回血量值
+            healthLabel = new JLabel(String.valueOf(plant.getHealth())); // 假设 getHealth() 返回血量值
             healthLabel.setForeground(Color.GREEN); // 设置血量标签颜色为绿色
             healthLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // 设置字体
             healthLabel.setOpaque(false); // 设置血量标签透明
@@ -320,7 +321,6 @@ public class GameWindow extends JFrame {
 
 // 将 JPanel 添加到目标格子
             targetCell.add(plantPanel);
-            targetCell.revalidate(); // 刷新界面
             targetCell.repaint(); // 重绘界面
 
 
@@ -332,6 +332,7 @@ public class GameWindow extends JFrame {
             plant.setX(row);
 
             GameManager.addPlant(plant); // 添加植物到GameManager
+//            printAllComponents();
 
 
         }
@@ -351,7 +352,7 @@ public class GameWindow extends JFrame {
 
     }
 
-    //public void printAllComponents() {
+//    public void printAllComponents() {
 //    for (int i = 0; i < GameWindow.cards.length; i++) {
 //        for (int j = 0; j < GameWindow.cards[i].length; j++) {
 //            Component[] components = GameWindow.cards[i][j].getComponents();
@@ -366,13 +367,17 @@ public class GameWindow extends JFrame {
 //        }
 //    }
 //}
+public JLabel getHealthLabel() {
+        return healthLabel;
+}
 public  void updatePlantHealth(JLabel healthLabel, Plant plant) {
     // 更新植物的生命值标签
     healthLabel.setText(String.valueOf(plant.getHealth()));
     System.out.println("更新后的血量: " + plant.getHealth());
-    healthLabel.revalidate();
+    healthLabel.validate();
     healthLabel.repaint();
 }
+
 
 
 
