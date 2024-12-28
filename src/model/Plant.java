@@ -1,6 +1,5 @@
 package model;
 
-import gui.GameWindow;
 import javax.swing.*;
 import java.awt.*;
 
@@ -35,13 +34,6 @@ public abstract class Plant extends JLabel {
     public void loseHealth(int damage) {
         health -= damage;
         updateHealthLabel(); // 更新生命值标签
-        if (health <= 0) {
-            // 植物死亡的处理逻辑
-            System.out.println(getName() + " 死亡");
-            GameWindow.cards[x][y].removeAll();
-            GameWindow.cards[x][y].revalidate();
-            GameWindow.cards[x][y].repaint();
-        }
     }
 
     private void updateHealthLabel() {
@@ -77,5 +69,7 @@ public abstract class Plant extends JLabel {
     public void setY(int y) {
         this.y = y;
     }
-
+    public String getName() {
+        return this.getClass().getSimpleName();
+    }
 }

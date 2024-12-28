@@ -24,6 +24,7 @@
            timer = new Timer();
        }
 
+
        public void update() {
            TimerTask task = new TimerTask() {
                public void run() {
@@ -41,5 +42,6 @@
            // 增加玩家的阳光数量
            gameManager.addSunPoints(Constants.SUNFLOWER_SUN_AMOUNT);
        }
+
    }
    

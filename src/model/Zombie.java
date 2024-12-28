@@ -6,8 +6,7 @@ import gui.GameWindow;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Map;
 import java.util.Random;
 
 public class Zombie {
@@ -16,7 +15,8 @@ public class Zombie {
     private final String imagePath; // 图片路径
     private int currentX; // 当前 X 坐标
     private int currentY; // 当前 Y 坐标
-    private final Timer moveTimer; // 移动定时器
+    public final Timer moveTimer; // 移动定时器
+    private static Timer zombieTimer;
     private JLabel imageLabel; // 存储僵尸的图片标签
     private final int damage;
     private final JLabel healthLabel; // 显示血量的标签
@@ -39,15 +39,10 @@ public class Zombie {
         this.healthLabel.setForeground(Color.RED); // 设置血量标签颜色为红色
         this.healthLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // 设置字体
         this.gameManager = new GameManager();
-
-        this.moveTimer = new Timer(5000, new ActionListener() { // 每隔3秒移动一次
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // 启动一个新线程来处理移动逻辑
-                new Thread(() -> {
-                    moveInSeparateThread();
-                }).start();
-            }
+        // 每隔5秒移动一次
+        this.moveTimer = new Timer(5000, _ -> {
+            // 启动一个新线程来处理移动逻辑
+            new Thread(this::moveInSeparateThread).start();
         });
         this.moveTimer.start(); // 启动移动定时器
     }
@@ -58,34 +53,24 @@ public class Zombie {
     }
 
     public static void zombie_generate(GameWindow gameWindow) {
-        // 初始化定时器，每5000毫秒（5秒）执行一次
-        Timer timer = new Timer(9000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // 获取最后一列的索引
-                int lastColumnIndex = GameWindow.cards[0].length - 1;
+        zombieTimer = new Timer(9000, _ -> {
+            int lastColumnIndex = GameWindow.cards[0].length - 1;
+            Random random = new Random();
+            int row = random.nextInt(5);
 
-                // 随机选择一行
-                Random random = new Random();
-                int row = random.nextInt(5); // 假设只有前5行有格子
+            Zombie zombie = new Zombie(gameWindow, "zombie");
+            zombie.currentX = row;
+            zombie.currentY = lastColumnIndex;
 
-                // 创建一个新的僵尸对象，并设置其位置为最后一列
-                Zombie zombie = new Zombie(gameWindow, "zombie"); // 直接设置名称为 "zombie"
-                zombie.currentX = row; // 设置初始 X 坐标
-                zombie.currentY = lastColumnIndex; // 设置初始 Y 坐标
-
-                // 创建一个 JPanel 并设置布局管理器为 BorderLayout
-                JPanel zombiePanel = new JPanel(new BorderLayout());
-                zombiePanel.add(zombie.getImageLabel(), BorderLayout.CENTER); // 添加图片标签到中心
-                zombiePanel.add(zombie.getHealthLabel(), BorderLayout.NORTH); // 添加血量标签到顶部
-                zombiePanel.setOpaque(false);
-
-                // 将僵尸面板添加到对应的 JPanel 中
-                GameWindow.cards[row][lastColumnIndex].add(zombiePanel);
-            }
+            JPanel zombiePanel = new JPanel(new BorderLayout());
+            zombiePanel.add(zombie.getImageLabel(), BorderLayout.CENTER);
+            zombiePanel.add(zombie.getHealthLabel(), BorderLayout.NORTH);
+            zombiePanel.setOpaque(false);
+            GameWindow.cards[row][lastColumnIndex].add(zombiePanel);
         });
-        timer.start(); // 启动定时器
+        zombieTimer.start();
     }
+
 
     private void moveInSeparateThread() {
         // 计算新的位置
@@ -93,14 +78,19 @@ public class Zombie {
         int newY = currentY - 1; // 假设僵尸向左移动
 
         // 检查目标格子是否存在且没有植物
-        if (newY >= 0 && !hasPlant(newX, newY)) {
-            // 更新僵尸的位置
-            updatePosition(newX, newY);
+        if (newY >= 0) {
+            if (!hasPlant(newX, newY)) {
+                updatePosition(newX, newY);
+            } else {
+                attack(newX, newY);
+            }
         } else {
-            // 如果目标格子有植物或不存在，则停止移动并攻击
-            startAttack(newX, newY);
+            this.moveTimer.stop();
+            zombieTimer.stop(); // 确保 zombieTimer 不为空再停止
+            gameManager.endGame(gameWindow.getFrame());
         }
     }
+
 
     private void updatePosition(int newX, int newY) {
         // 使用 SwingUtilities.invokeLater 来确保在 EDT 上更新 UI
@@ -134,60 +124,57 @@ public class Zombie {
         return false; // 遍历完所有组件后仍未找到非空组件，返回 false
     }
 
- private class AttackTask implements Runnable {
-    private final int x;
-    private final int y;
 
-    public AttackTask(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-    @Override
-    public void run() {
-        long threadId = Thread.currentThread().getId();
-        System.out.println("启动攻击线程 ID: " + threadId);
-        System.out.println("参数: " + x + "," + y);
+private void attack(int x, int y) {
+    // 使用 GameManage 的 GridPosition 方法将 x, y 转换为 position 类型
+    GameManager.GridPosition position = new GameManager.GridPosition(x, y);
 
-        // 攻击逻辑
-        java.util.List<Plant> plants = gameManager.getPlants();
-        System.out.println("尝试攻击");
+    Map<GameManager.GridPosition, Plant> plants = GameManager.plants; // 获取植物地图
 
-        if (plants == null) {
-            System.out.println("空: " + plants);
-        } else {
-            System.out.println("非空: " + plants);
-        }
+    // 通过 position 作为键读取 plants 中的植物实例
+    Plant targetPlant = plants.get(position);
+    System.out.println("传入的坐标  " + x + "  " + y);
+    System.out.println("转换的 " + targetPlant);
 
-        for (Plant plant : plants) {
-            System.out.println("植物名称: " + plant.getName() + ", 位置: (" + plant.getX() + ", " + plant.getY() + ")");
-            System.out.println("预计位置: " + x + "," + y);
-        }
+    if (targetPlant != null) {
+        System.out.println("植物名称: " + targetPlant.getName() + ", 位置: (" + targetPlant.getX() + ", " + targetPlant.getY() + ")");
 
-        for (Plant plant : plants) {
-            if (Thread.currentThread().isInterrupted()) {
+        while (targetPlant.getHealth() > 0) {
+            targetPlant.loseHealth(damage); // 确保 damage 已经定义
+            System.out.println(name + " 攻击: " + targetPlant.getName());
+
+            // 确保在 EDT 上更新 UI
+            SwingUtilities.invokeLater(() -> {
+                gameWindow.updatePlantHealth(gameWindow.getHealthLabel(), targetPlant);
+            });
+
+            // 检查植物是否被摧毁
+            if (targetPlant.getHealth() <= 0) {
+                // 植物死亡的处理逻辑
+                System.out.println(getName() + " 死亡");
+                GameWindow.cards[x][y].removeAll();
+                GameWindow.cards[x][y].revalidate();
+                GameWindow.cards[x][y].repaint();
+                // 从 plants 映射中删除被摧毁的植物
+                plants.remove(position);
                 break;
             }
-            if (plant.getX() == x && plant.getY() == y) {
-                plant.loseHealth(damage);
-                System.out.println(name + " 攻击: " + plant.getName());
 
-                // 确保在 EDT 上更新 UI
-                SwingUtilities.invokeLater(() -> {
-                    gameWindow.updatePlantHealth(gameWindow.getHealthLabel(), plant);
-                });
-
-                break; // 找到目标植物后结束循环
-            } else {
-                System.out.println("未找到目标");
+            // 可选：添加延迟以模拟攻击间隔（例如每秒攻击一次）
+            try {
+                Thread.sleep(1000); // 休眠1秒
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("攻击线程被中断");
             }
         }
+    } else {
+        System.out.println("没有找到目标植物");
     }
 }
 
-private void startAttack(final int x, final int y) {
-    Thread attackThread = new Thread(new AttackTask(x, y));
-    attackThread.start();
-}
+
+
 
 
 private void stopAttack(Thread thread) {

@@ -1,9 +1,7 @@
 package gui;
 
 import game.GameManager;
-import model.Plant;
-import model.Sunflower;
-import model.Zombie;
+import model.*;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -128,8 +126,8 @@ public class GameWindow extends JFrame {
         addCard(topSlotPanel, peashooter, "100", mainContainer);
 
         // 创建一个 WallNut 实例
-        Plant wallnut = new model.WallNut();
-        addCard(topSlotPanel, wallnut, "75", mainContainer);
+        Plant walnut = new WalNut();
+        addCard(topSlotPanel, walnut, "75", mainContainer);
 
         // 将 topSlotPanel 添加到 mainContainer
         mainContainer.add(topSlotPanel, BorderLayout.NORTH);
@@ -146,7 +144,6 @@ public class GameWindow extends JFrame {
         updateGameState();
 
         Zombie.zombie_generate(this);
-
 
         // 设置窗口可见
         setVisible(true);
@@ -222,7 +219,8 @@ public class GameWindow extends JFrame {
 
                 topSlotPanel.add(card);
                 // 调用 placeCard 方法并传递 Plant 对象
-                placeCard(plant, mainContainer, newX, newY);
+                String plantName = plant.getName();
+                placeCard(plantName, mainContainer, newX, newY);
 
 
                 // 重置卡片的位置为顶部卡槽的位置
@@ -251,92 +249,108 @@ public class GameWindow extends JFrame {
     }
 
 
-    public void placeCard(Plant plant, JPanel mainContainer, int x, int y) {
-        // 获取 gameAreaPanel 在 mainContainer 中的位置
-        Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
-        Point mainContainerLocation = mainContainer.getLocationOnScreen();
+   public void placeCard(String plantType, JPanel mainContainer, int x, int y) {
+    Plant plant;
 
-        // 将鼠标释放位置转换为 gameAreaPanel 的坐标系
-        int gameAreaX = x - (gameAreaLocation.x - mainContainerLocation.x);
-        int gameAreaY = y - (gameAreaLocation.y - mainContainerLocation.y);
-
-        // 计算释放位置对应的格子坐标
-        int col = (gameAreaX + 50) / CELL_WIDTH;
-        int row = (gameAreaY + 120) / CELL_HEIGHT;
-
-        // 检查是否在有效范围内
-        if (row >= 0 && row < 5 && col >= 0 && col < 9) {
-            // 获取目标格子
-            JPanel targetCell = cards[row][col];
-
-            // 检查目标格子是否已经有卡片
-            if (targetCell.getComponentCount() > 0) {
-                return;
-            }
-
-            // 获取植物的成本
-            int cost = plant.getCost();
-
-            // 检查阳光数量是否足够
-            if (GameManager.getSunPoints() < cost) {
-                // 阳光数量不足，可以选择性地向用户显示一条消息
-                JOptionPane.showMessageDialog(this, "阳光不足，无法种植 " + plant.getClass().getSimpleName(), "阳光不足", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // 打印传入的植物类的简单名称
-            System.out.println("放置的是" + plant.getClass().getSimpleName());
-
-            // 扣除阳光数量
-            GameManager.deductSunPoints(cost);
-
-            // 加载并设置卡片图片
-            String imagePath = plant.getImagePath(); // 提取图片路径
-            ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
-            Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
-            ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
-
-// 创建一个新的 JLabel 来显示图标
-            JLabel label = new JLabel(scaledCardIcon);
-            label.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
-            label.setOpaque(false); // 设置 JLabel 透明
-
-// 创建一个新的 JLabel 来显示血量
-            healthLabel = new JLabel(String.valueOf(plant.getHealth())); // 假设 getHealth() 返回血量值
-            healthLabel.setForeground(Color.GREEN); // 设置血量标签颜色为绿色
-            healthLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // 设置字体
-            healthLabel.setOpaque(false); // 设置血量标签透明
-
-// 创建一个 JPanel 并设置布局管理器为 BorderLayout
-            JPanel plantPanel = new JPanel(new BorderLayout());
-            plantPanel.setOpaque(false); // 设置 JPanel 透明
-            plantPanel.add(label, BorderLayout.CENTER); // 添加植物图片标签到中心
-            plantPanel.add(healthLabel, BorderLayout.NORTH); // 添加血量标签到顶部
-
-// 给每个 plantPanel 唯一命名
-            plantPanel.setName("Plant_" + row + "_" + col);
-
-// 清除目标格子中的所有组件
-            targetCell.removeAll();
-
-// 将 JPanel 添加到目标格子
-            targetCell.add(plantPanel);
-            targetCell.repaint(); // 重绘界面
+switch (plantType) {
+    case "Sunflower":
+        plant = new Sunflower();
+        break;
+    case "Peashooter":
+        plant = new Peashooter();
+        break;
+    case "WalNut":
+        plant = new WalNut();
+        break;
+    default:
+        return;
+}
 
 
-            // 更新二维数组中的卡牌引用
-            cards[row][col] = targetCell;
+    // 获取 gameAreaPanel 在 mainContainer 中的位置
+    Point gameAreaLocation = gameAreaPanel.getLocationOnScreen();
+    Point mainContainerLocation = mainContainer.getLocationOnScreen();
 
-            // 设置植物的坐标
-            plant.setY(col);
-            plant.setX(row);
+    // 将鼠标释放位置转换为 gameAreaPanel 的坐标系
+    int gameAreaX = x - (gameAreaLocation.x - mainContainerLocation.x);
+    int gameAreaY = y - (gameAreaLocation.y - mainContainerLocation.y);
 
-            GameManager.addPlant(plant); // 添加植物到GameManager
-//            printAllComponents();
+    // 计算释放位置对应的格子坐标
+    int col = (gameAreaX + 50) / CELL_WIDTH;
+    int row = (gameAreaY + 120) / CELL_HEIGHT;
 
+    // 检查是否在有效范围内
+    if (row >= 0 && row < 5 && col >= 0 && col < 9) {
+        // 获取目标格子
+        JPanel targetCell = cards[row][col];
 
+        // 检查目标格子是否已经有卡片
+        if (targetCell.getComponentCount() > 0) {
+            return;
         }
+
+        // 获取植物的成本
+        int cost = plant.getCost();
+
+        // 检查阳光数量是否足够
+        if (GameManager.getSunPoints() < cost) {
+            // 阳光数量不足，可以选择性地向用户显示一条消息
+            JOptionPane.showMessageDialog(this, "阳光不足，无法种植 " + plant.getClass().getSimpleName(), "阳光不足", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 打印传入的植物类的简单名称
+        System.out.println("放置的是" + plant.getClass().getSimpleName());
+
+        // 扣除阳光数量
+        GameManager.deductSunPoints(cost);
+
+        // 加载并设置卡片图片
+        String imagePath = plant.getImagePath(); // 提取图片路径
+        ImageIcon cardIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath)));
+        Image scaledImage = cardIcon.getImage().getScaledInstance(CELL_WIDTH, CELL_HEIGHT, Image.SCALE_SMOOTH); // 将图片调整为格子大小
+        ImageIcon scaledCardIcon = new ImageIcon(scaledImage);
+
+        // 创建一个新的 JLabel 来显示图标
+        JLabel label = new JLabel(scaledCardIcon);
+        label.setPreferredSize(new Dimension(CELL_WIDTH, CELL_HEIGHT));
+        label.setOpaque(false); // 设置 JLabel 透明
+
+        // 创建一个新的 JLabel 来显示血量
+        healthLabel = new JLabel(String.valueOf(plant.getHealth())); // 假设 getHealth() 返回血量值
+        healthLabel.setForeground(Color.GREEN); // 设置血量标签颜色为绿色
+        healthLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // 设置字体
+        healthLabel.setOpaque(false); // 设置血量标签透明
+
+        // 创建一个 JPanel 并设置布局管理器为 BorderLayout
+        JPanel plantPanel = new JPanel(new BorderLayout());
+        plantPanel.setOpaque(false); // 设置 JPanel 透明
+        plantPanel.add(label, BorderLayout.CENTER); // 添加植物图片标签到中心
+        plantPanel.add(healthLabel, BorderLayout.NORTH); // 添加血量标签到顶部
+
+        // 给每个 plantPanel 唯一命名
+        plantPanel.setName("Plant_" + row + "_" + col);
+
+        // 清除目标格子中的所有组件
+        targetCell.removeAll();
+
+        // 将 JPanel 添加到目标格子
+        targetCell.add(plantPanel);
+        targetCell.repaint(); // 重绘界面
+
+        // 更新二维数组中的卡牌引用
+        cards[row][col] = targetCell;
+
+        // 设置植物的坐标
+        plant.setY(col);
+        plant.setX(row);
+
+        game.GameManager.GridPosition position = new GameManager.GridPosition(row, col);
+        GameManager.addPlant(plant, position);
+        System.out.println("放置的植物坐标为：" + position);
     }
+}
+
 
     private void updateGameState() {
         // 更新植物的状态
@@ -352,36 +366,21 @@ public class GameWindow extends JFrame {
 
     }
 
-//    public void printAllComponents() {
-//    for (int i = 0; i < GameWindow.cards.length; i++) {
-//        for (int j = 0; j < GameWindow.cards[i].length; j++) {
-//            Component[] components = GameWindow.cards[i][j].getComponents();
-//            System.out.println("坐标 (" + i + ", " + j + ") 的组件列表:");
-//            if (components == null || components.length == 0) {
-//                System.out.println("  无组件");
-//            } else {
-//                for (Component component : components) {
-//                    System.out.println("  类型: " + component.getClass().getName() + ", 名称: " + component.getName());
-//                }
-//            }
-//        }
-//    }
-//}
+
 public JLabel getHealthLabel() {
         return healthLabel;
 }
+
+
 public  void updatePlantHealth(JLabel healthLabel, Plant plant) {
     // 更新植物的生命值标签
     healthLabel.setText(String.valueOf(plant.getHealth()));
     System.out.println("更新后的血量: " + plant.getHealth());
-    healthLabel.validate();
     healthLabel.repaint();
 }
-
-
-
-
-
+    public JFrame getFrame() {
+        return this;
+    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             GameManager gameManager = new GameManager(); // 创建GameManager实例
