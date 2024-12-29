@@ -34,9 +34,11 @@ public abstract class Plant extends JLabel {
     public void loseHealth(int damage) {
         health -= damage;
         updateHealthLabel(); // 更新生命值标签
+        System.out.println("当前的生命是"+health);
     }
 
     private void updateHealthLabel() {
+        System.out.println("尝试更新");
         healthLabel.setText(String.valueOf(health));
         healthLabel.revalidate();
         healthLabel.repaint();
@@ -48,6 +50,11 @@ public abstract class Plant extends JLabel {
 
     public String getImagePath() { // 获取图像路径
         return imagePath;
+    }
+
+
+    public JLabel getHealthLabel() {
+        return healthLabel;
     }
 
     public int getHealth() {

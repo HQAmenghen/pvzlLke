@@ -34,7 +34,7 @@ public class MainWindow extends JFrame {
         startButton.setBounds(500, 400, 200, 50);
         startButton.addActionListener(_ -> {
             GameManager gameManager = new GameManager();
-            GameWindow gameWindow = new GameWindow(gameManager);
+            GameWindow gameWindow = new GameWindow();
             gameWindow.setVisible(true);
             MainWindow.this.setVisible(false);
             gameManager.startGame();
